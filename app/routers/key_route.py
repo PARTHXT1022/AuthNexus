@@ -56,7 +56,6 @@ def authorize(
         "expires_at": time.time() + CODE_TTL,
         "used": False,
     }
-    # return RedirectResponse(f"{redirect_uri}?code={issued_code}&state={state}")
     return {
         "code": issued_code,
         "state": state,
