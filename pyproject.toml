@@ -1,0 +1,15 @@
+[project]
+name = "saas-security-application"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "cryptography>=50.0.1",
+    "fastapi[standard]>=0.141.1",
+    "pathlib>=1.0.1",
+    "pydantic>=2.13.5",
+    "pylance>=11.0.0",
+    "python-jose>=3.5.0",
+    "uvicorn>=0.52.4",
+]

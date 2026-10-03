@@ -1,0 +1,9 @@
+cat > .gitignore << 'EOF'
+.venv/
+__pycache__/
+*.pyc
+.env
+app/services/keys_store/
+*.pem
+.pytest_cache/
+EOF
