@@ -16,7 +16,7 @@ def _get_private_key_pem() -> str:
     ).decode()
 
 
-def create_access_token(sub: str, client_id: str, scope: str, issuer: str) -> str:
+def create_access_token(sub: str, client_id: str, scope: str, issuer: str, tenant_id: str) -> str:
     now = int(time.time())
     claims = {
         "iss": issuer,

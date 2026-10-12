@@ -7,25 +7,26 @@ from fastapi import APIRouter, HTTPException, Form
 from fastapi.responses import RedirectResponse
 from app.config.loader import config
 from app.services.jwt_service import create_access_token, create_id_token
+from app.services.users import MOCK_USERS
 
 router = APIRouter(
-    prefix='/api/v1',
     tags=["Key Routes"]
 )
 
-CODE_TTL = 60
-REFRESH_TOKEN_TTL = 60 * 60 * 24 * 14  
+CODE_TTL = 330
+REFRESH_TOKEN_TTL = 60 * 60 * 24 * 14
 issuer_url = config.ISSUER
 
 AUTH_CODE_STORE: dict[str, dict] = {}
 REFRESH_TOKEN_STORE: dict[str, dict] = {}
 
 
-def issue_refresh_token(sub: str, client_id: str) -> str:
+def issue_refresh_token(sub: str, client_id: str, tenant_id: str) -> str:
     token = secrets.token_urlsafe(32)
     REFRESH_TOKEN_STORE[token] = {
         "sub": sub,
         "client_id": client_id,
+        "tenant_id": tenant_id,   
         "expires_at": time.time() + REFRESH_TOKEN_TTL,
         "revoked": False,
     }
@@ -40,7 +41,8 @@ def authorize(
     state: str,
     code_challenge: str,
     code_challenge_method: str,
-    scope: str = "openid profile"
+    scope: str = "openid profile",
+    login_as: str = "user_123",
 ):
     if response_type != "code":
         raise HTTPException(400, detail="only 'code' response_type is supported")
@@ -49,10 +51,10 @@ def authorize(
 
     issued_code = secrets.token_urlsafe(24)
     AUTH_CODE_STORE[issued_code] = {
-        "client_id": client_id,          
-        "redirect_uri": redirect_uri,    
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
         "code_challenge": code_challenge,
-        "sub": "user_123",
+        "sub": login_as,
         "expires_at": time.time() + CODE_TTL,
         "used": False,
     }
@@ -61,6 +63,7 @@ def authorize(
         "state": state,
         "note": "In production this would be a 307 redirect to redirect_uri with these as query params."
     }
+
 
 @router.post("/token")
 def token(
@@ -95,9 +98,18 @@ def token(
 
         entry["used"] = True
 
-        access_token = create_access_token(sub=entry["sub"], client_id=client_id, scope="openid profile", issuer=issuer_url)
+        user = MOCK_USERS.get(entry["sub"])
+        if user is None:
+            raise HTTPException(status_code=400, detail="Invalid Grant")
+
+        access_token = create_access_token(
+            sub=entry["sub"], client_id=client_id, scope="openid profile",
+            issuer=issuer_url, tenant_id=user["tenant_id"]
+        )
         id_token = create_id_token(sub=entry["sub"], client_id=client_id, issuer=issuer_url)
-        new_refresh_token = issue_refresh_token(sub=entry["sub"], client_id=client_id)
+        new_refresh_token = issue_refresh_token(
+            sub=entry["sub"], client_id=client_id, tenant_id=user["tenant_id"]
+        )
 
         return {
             "access_token": access_token,
@@ -119,10 +131,15 @@ def token(
         if entry["client_id"] != client_id:
             raise HTTPException(400, {"error": "invalid_grant", "detail": "client mismatch"})
 
-        entry["revoked"] = True  
+        entry["revoked"] = True
 
-        new_access_token = create_access_token(sub=entry["sub"], client_id=client_id, scope="openid profile", issuer=issuer_url)
-        new_refresh_token = issue_refresh_token(sub=entry["sub"], client_id=client_id)
+        new_access_token = create_access_token(
+            sub=entry["sub"], client_id=client_id, scope="openid profile",
+            issuer=issuer_url, tenant_id=entry["tenant_id"]   
+        )
+        new_refresh_token = issue_refresh_token(
+            sub=entry["sub"], client_id=client_id, tenant_id=entry["tenant_id"]
+        )
 
         return {
             "access_token": new_access_token,

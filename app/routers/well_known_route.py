@@ -5,7 +5,6 @@ from app.config.loader import config
 issuer_url = config.ISSUER
 
 router = APIRouter(
-    prefix="/api/v1",
     tags = ["Discovery"]
 )
 

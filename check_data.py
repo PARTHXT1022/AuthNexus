@@ -1,0 +1,8 @@
+import base64, json
+
+def peek(token: str) -> dict:
+    payload = token.split(".")[1]
+    payload += "=" * (-len(payload) % 4)
+    return json.loads(base64.urlsafe_b64decode(payload))
+
+print(peek("eyJhbGciOiJSUzI1NiIsImtpZCI6Im1vY2stb2lkYy1rZXktMSIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAiLCJzdWIiOiJ1c2VyXzEyMyIsImF1ZCI6InRlc3QtY2xpZW50Iiwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSIsImlhdCI6MTc5MTgyNzgwNiwiZXhwIjoxNzkxODMxNDA2LCJ0b2tlbl91c2UiOiJhY2Nlc3MifQ.SPXOJ7FIVPoz_8eQuhqGcJB8D3aZU1NlbcC02Iv-tQnCu3tnkFl_GuAhtZSQH5gfYOIEzJg30zsAo3CGZGZtW99c7sAhxPFP-GT1EOCP2SFHQxM1Bone463amGhK8pzXqjJZEB0mjVCW8Mq3ZwBpqya2-xnHEKzQq4pStuZCEd38-6BQg7ra_XgjqNzFN8xaHv_MtMiOMq3NPoGwrmH9nYoPoXVg0H-pwmY0txcpRJfg5sKOO9ZFrbgrLFsV2uWcop_cOIIlpQU0bJ9g5KHzwRkdUrajfKM2IfWqh_LwAlzjTsaxUawFohcn8msz50ULlszQsoljPBGPmZmhv095uA"))

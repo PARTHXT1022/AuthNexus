@@ -10,12 +10,9 @@ key_id = config.KID
 key_path.parent.mkdir(parents=True, exist_ok=True)
 
 
-def generate_or_load_keypair() -> rsa.RSAPrivateKey:
+def generate_or_load_keypair():
     if key_path.exists():
-        return serialization.load_pem_private_key(
-            key_path.read_bytes(), password=None
-        )
-
+        return serialization.load_pem_private_key(key_path.read_bytes(), password=None)
     new_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     key_path.write_bytes(
         new_key.private_bytes(
